@@ -105,6 +105,12 @@ def level_preview(h: int, exp: int) -> int | None:
     return sum(exp >= threshold for threshold in thresholds) if thresholds else None
 
 
+def next_level_at(h: int, exp: int) -> int | None:
+    """Next total EXP threshold, or None at max/for unknown progression."""
+    return next((threshold for threshold in (BY_HASH[h].thresholds or ())
+                 if exp < threshold), None)
+
+
 def edited(f: core.SaveFile, edits: dict[int, int]) -> bytearray:
     """Return a copy with only the requested two-byte EXP fields changed."""
     for h, exp in edits.items():

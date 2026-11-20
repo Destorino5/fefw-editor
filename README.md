@@ -26,7 +26,7 @@ library, or a ready-made Windows `.exe`.
 | **Mounts** | The battalion and mount each unit carries, chosen from the save's pool. |
 | **World map** | Show or hide places and roads, and mark places visited. |
 | **Tutorials** | Make tutorial records available or remove them, with category, state and name-evidence filters. |
-| **Blessings** | Stored EXP for all seven gods and available first-audience controls. |
+| **Blessings** | Stored EXP, level previews and **Next level at** thresholds for the gods, plus available first-audience controls. Fortuna's progression remains unknown. |
 | **Fast travel** | Add or remove identified Dagsion destinations. |
 | **Functions** | Facility and feature availability, area access, and city movement restrictions. |
 | **Notable Deeds** | Progress counters and milestone information, with claim states and rewards shown separately. |
@@ -217,6 +217,9 @@ Otherwise use **Open folder…** and pick any slot file inside it.
   returns to. `Part_<lord>_<part>` are part checkpoints. `Global` is maintained separately by the game; its progression and carryover
   data are not fully mapped by this editor. The slot list shows the lord, part and chapter each slot was saved in
   (e.g. `★ Auto · Theodora P1 Ch12`), read from the save itself; ★ marks `Auto`.
+* **Keep `Route_Ism`.** Returning to the Obelisk Chamber has been observed to
+  fail when this file is missing. Preserve it when backing up or moving the
+  save folder; editing `Auto` or creating chapter checkpoints does not replace it.
 * **Edit `Auto`.** It's the save the game continues from, so editing it alone is
   enough.
 * **Only the live data is changed.** `Auto` also carries its own copies of
