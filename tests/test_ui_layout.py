@@ -52,6 +52,22 @@ class LayoutTest(unittest.TestCase):
             self.assertLessEqual(start + getattr(widget, 'winfo_' + size)(),
                                  origin + getattr(viewport, 'winfo_' + size)())
 
+    def test_blessings_next_level_column_refreshes_at_thresholds(self):
+        import blessings
+        from test_blessings import fixture as blessing_fixture, HASHES
+        f = blessing_fixture()
+        before = bytes(f.payload)
+        self.app.pages.select(self.app.blessings_page)
+        with patch.object(self.app, 'core_of', return_value=f):
+            self.app.refresh_blessings()
+            self.assertEqual(self.app.blessing_tree.set(f'{HASHES[0]:016x}', 'next'), 'Unknown')
+            self.assertEqual(self.app.blessing_tree.set(f'{HASHES[1]:016x}', 'next'), '60')
+            self.assertEqual(bytes(f.payload), before)
+            for exp, expected in ((59, '60'), (60, '120'), (120, 'Max'), (0, '25')):
+                f.payload = blessings.edited(f, {HASHES[1]: exp})
+                self.app.refresh_blessings()
+                self.assertEqual(self.app.blessing_tree.set(f'{HASHES[1]:016x}', 'next'), expected)
+
     def test_sidebar_and_tab_menu_remain_visible(self):
         for size in ('1360x900', '1234x768', '1000x640'):
             with self.subTest(size=size):
@@ -145,3 +161,41 @@ class LayoutTest(unittest.TestCase):
             self.app.open_add_unit()
         self.assertEqual(bytes(f.payload), original)
         self.app.sv = None
+
+
+class StartupTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        try:
+            root = tk.Tk()
+            root.destroy()
+        except tk.TclError as exc:
+            raise unittest.SkipTest(f'Tk display unavailable: {exc}')
+
+    def test_remembered_folder_populates_without_selecting_another_slot(self):
+        from pathlib import Path
+        import tempfile
+        from test_story import box_for
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'Auto'
+            original = box_for(fixture()).to_bytes()
+            path.write_bytes(original)
+            with patch.object(editor.App, '_load_settings', return_value={'last_folder': folder}), \
+                    patch.object(editor.App, '_save_settings'):
+                app = editor.App()
+                errors = []
+                app.report_callback_exception = lambda *error: errors.append(error)
+                try:
+                    app.after(500, app.quit)
+                    app.mainloop()
+                    self.assertEqual(errors, [])
+                    self.assertIsNotNone(app.sv)
+                    self.assertEqual(app.sv.path, str(path))
+                    self.assertTrue(app.unit_tree.get_children())
+                    self.assertNotEqual(app.unit_name.cget('text'), 'No unit selected')
+                    self.assertFalse(app.dirty)
+                    self.assertEqual(path.read_bytes(), original)
+                finally:
+                    for job in app.tk.call('after', 'info'):
+                        app.after_cancel(job)
+                    app.destroy()

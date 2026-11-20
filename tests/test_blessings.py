@@ -54,6 +54,20 @@ class BlessingsTest(unittest.TestCase):
                 for exp in (0, 1, 100, 65535):
                     self.assertIsNone(blessings.level_preview(god.hash, exp))
 
+    def test_next_level_uses_total_exp_and_handles_each_boundary(self):
+        for god in blessings.GODS:
+            if god.thresholds is None:
+                for exp in (0, 1, 65535):
+                    self.assertIsNone(blessings.next_level_at(god.hash, exp))
+                continue
+            self.assertEqual(blessings.next_level_at(god.hash, 0), god.thresholds[0])
+            for i, threshold in enumerate(god.thresholds):
+                self.assertEqual(blessings.next_level_at(god.hash, threshold - 1), threshold)
+                expected = god.thresholds[i + 1] if i < 2 else None
+                self.assertEqual(blessings.next_level_at(god.hash, threshold), expected)
+                self.assertEqual(blessings.next_level_at(god.hash, threshold + 1), expected)
+            self.assertIsNone(blessings.next_level_at(god.hash, 65535))
+
     def test_read_shifted_and_reordered_records(self):
         for order, prefix in ((HASHES, b'\xee' * 4), (HASHES[::-1], b'\xee' * 64)):
             with self.subTest(order=order):

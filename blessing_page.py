@@ -19,10 +19,11 @@ class BlessingPageMixin:
         frame = ttk.Frame(page, style="Card.TFrame")
         frame.pack(fill="both", expand=True, pady=(8, 0))
         tree = self.blessing_tree = ttk.Treeview(
-            frame, columns=("exp", "level", "selected", "audience", "key"),
+            frame, columns=("exp", "level", "next", "selected", "audience", "key"),
             show="tree headings", selectmode="browse", height=7)
         for col, title, width in (("#0", "God", 125), ("exp", "Stored EXP", 90),
                                   ("level", "Level preview", 140),
+                                  ("next", "Next level at", 115),
                                   ("selected", "Selected (stored)", 125),
                                   ("audience", "First audience", 175),
                                   ("key", "Reads as", 235)):
@@ -68,6 +69,7 @@ class BlessingPageMixin:
         self.blessing_audience_detail.pack(anchor="w", pady=(5, 0))
         ttk.Label(page, style="CardFaint.TLabel", wraplength=980, justify="left", text=(
             "Edit one god at a time. Level previews use game-data thresholds; Fortuna is special. "
+            "Next level at shows the total EXP needed, not the remaining amount. "
             "The audience toggle changes only the first-talk flag; other access conditions may still apply. "
             "Audience edits leave EXP, selected blessings, Divine Sand and travel destinations unchanged.\n"
             "Uses the same-route mirroring selection. Apply EXP and the toggle change memory; "
@@ -98,10 +100,14 @@ class BlessingPageMixin:
             for god in blessings.GODS:
                 record = self._blessing_records[god.hash]
                 level = blessings.level_preview(god.hash, record.exp)
+                next_exp = blessings.next_level_at(god.hash, record.exp)
+                next_label = ("Unknown" if god.thresholds is None else
+                              "Max" if next_exp is None else next_exp)
                 selected = {0: "No (0)", 1: "Yes (1)"}.get(
                     record.selected, f"Unknown ({record.selected})")
                 tree.insert("", "end", iid=f"{god.hash:016x}", text=god.name,
                             values=(record.exp, "Special / unknown" if level is None else level,
+                                    next_label,
                                     selected,
                                     audiences.state_label(god.hash, self._audience_values or {})
                                     if self._audience_values is not None or god.hash not in audiences.KEYS
